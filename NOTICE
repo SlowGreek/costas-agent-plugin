@@ -1,0 +1,26 @@
+Costas Agent Plugin
+Copyright 2026 Costas Panay
+
+This product includes:
+
+- Goal continuation behavior adapted from OpenAI Codex concepts, licensed
+  under Apache License 2.0.
+- Learn skill adapted from NousResearch/hermes-agent concepts, licensed under
+  the MIT License.
+- Creative Ideation skill vendored unchanged from NousResearch/hermes-agent
+  (skills/creative-ideation/), licensed under the MIT License. The upstream
+  files are reproduced byte-for-byte; their sha256 digests are pinned in
+  tests/vendor_hashes.json and verified by tests/validate.py.
+- Frontend Design skill vendored unchanged from anthropics/skills
+  (skills/frontend-design/), licensed under Apache License 2.0. The upstream
+  files are reproduced byte-for-byte; the authoritative upstream license text is
+  retained at skills/frontend-design/LICENSE.txt and digests are pinned in
+  tests/vendor_hashes.json.
+- Local Workflow, Ultracode, Adversarial Loop, Mechanical Migration,
+  Failure Work Queue, Semantic Port Audit, Loop Design, runtime integration,
+  and tests, licensed under Apache License 2.0.
+
+Upstream license texts are retained in licenses/ (MIT.txt names the Creative
+Ideation copyright holder; Apache-2.0.txt references the full text in LICENSE)
+and, for Frontend Design, in skills/frontend-design/LICENSE.txt. Vendored
+third-party files are never modified; any change to them fails validation.

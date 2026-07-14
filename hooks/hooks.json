@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "python3 \"${PLUGIN_ROOT}/runtime/goal_continue.py\"",
+        "powershell": "python \"${PLUGIN_ROOT}/runtime/goal_continue.py\"",
+        "env": {
+          "GOAL_STATE_DIR": "${COPILOT_PLUGIN_DATA}/goals",
+          "GOALCTL_PATH": "${PLUGIN_ROOT}/runtime/goalctl.py"
+        },
+        "timeoutSec": 15
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "costas-agent-plugin",
+  "version": "1.0.0",
+  "description": "Portable agentic engineering skills, Goal continuation, and bounded Ultracode workflows.",
+  "author": {
+    "name": "Costas Panay",
+    "url": "https://github.com/SlowGreek"
+  },
+  "homepage": "https://github.com/SlowGreek/costas-agent-plugin",
+  "repository": "https://github.com/SlowGreek/costas-agent-plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "agentic-engineering",
+    "multi-agent",
+    "workflows",
+    "copilot"
+  ],
+  "category": "development",
+  "skills": {
+    "paths": [
+      "./skills"
+    ],
+    "exclusive": true
+  },
+  "rules": {
+    "paths": [
+      "./rules"
+    ],
+    "exclusive": true
+  },
+  "extensions": {
+    "paths": [
+      "./extensions"
+    ],
+    "exclusive": true
+  },
+  "hooks": "./hooks/hooks.json",
+  "postInstallMessage": "Run /costas-agent-guide overview to learn what was installed, choose the right capability, and see best practices. Ultracode child agents require GH_TOKEN or a working `gh auth login`."
+}

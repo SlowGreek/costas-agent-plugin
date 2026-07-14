@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+tests/.goal-test-state/
+tests/.isolated-home/
+tests/.install-output/
+tests/.sdk-state/
