@@ -51,6 +51,10 @@ guide itself has no external dependencies.
    - The **Goal hook** checks persistent Goal state when a session attempts to
      stop and requests another turn while work and budget remain. State is
      isolated by Copilot session and working directory.
+   - **Super Goal** keeps the human-facing parent accountable while one child
+     executes. The parent pauses while waiting, steers on notifications,
+     independently verifies completion, and can render milestone progress in
+     the optional side-panel canvas.
    - The **Ultracode extension** exposes tools for starting and managing bounded
      JavaScript workflows made of isolated Copilot child sessions.
    - The **repository-maintenance harness** uses a generated codebase adapter,
@@ -76,6 +80,7 @@ guide itself has no external dependencies.
    | Summarize maintenance evidence | `/repo-report` | Durable digest of outcomes, friction, and decisions |
    | Improve maintenance safeguards | `/repo-self-improve` | Submitted-or-prepared WI/draft pairs without weakening gates |
    | Continue a long objective across turns | `/goal` | Persistent objective, budget, pause/resume, and completion proof |
+   | Delegate one objective with active parent supervision | `/super-goal` | One child session, bounded steering, independent acceptance, and optional live progress canvas |
    | Run a bounded background agent workflow | `/ultracode` | Persisted multi-agent run with status, cancellation, and resume |
    | Design an adaptive multi-agent approach | `/workflow` | Fan-out, pipeline, adversarial, or repair workflow |
    | Make a high-risk change with independent review | `/adversarial-loop` | Implement-review-fix cycle with evidence gates |
@@ -107,6 +112,7 @@ guide itself has no external dependencies.
    /maintain-repo
    /repo-ci-health
    /goal "Complete the API migration and prove parity" --budget 30
+   /super-goal "Complete the API migration while I supervise acceptance"
    /workflow "Plan the migration across independent ownership shards"
    /ultracode "Audit every service contract and synthesize the findings"
    /adversarial-loop "Change the authentication lifecycle without regressions"
@@ -142,6 +148,12 @@ guide itself has no external dependencies.
       `list_workflows` exists before claiming standing mode is armed.
    6. Surface missing prerequisites or inaccessible state. Do not substitute a
       success-shaped fallback.
+   7. On Windows, a successful fresh install is already current; do not
+      immediately update it. `os error 5` during plugin update is a Copilot CLI
+      Windows cache-lock issue, not a fix supplied by this plugin. Close every
+      Copilot session and retry. If it persists, uninstall then install the
+      plugin. Re-adding the marketplace is unnecessary, and administrator
+      elevation should not normally be needed.
 
 ## Quick Reference
 
@@ -165,6 +177,7 @@ guide itself has no external dependencies.
 - `/repo-self-improve`
 - `/loop-design [repo|chats|both] [area or objective]`
 - `/goal <objective|status|pause|resume|clear> [--budget N]`
+- `/super-goal <objective|status|steer|pause|resume|stop> [--rounds N]`
 - `/ultracode <task to orchestrate>`
 - `/workflow <task>`
 - `/adversarial-loop <high-risk task>`
@@ -181,6 +194,9 @@ guide itself has no external dependencies.
 
 - Do not use multiple agents merely because the tools are available.
 - A Goal budget ending is not evidence that the objective is complete.
+- Super Goal progress is passed acceptance criteria, not elapsed time or child
+  confidence. The parent must pause its root Goal while waiting and independently
+  verify every criterion before completion.
 - Loop Design never silently broadens from repository evidence into unrelated
   chat history.
 - Repository maintenance is not armed merely because one loop ran. Every

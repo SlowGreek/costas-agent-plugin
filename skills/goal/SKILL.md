@@ -38,3 +38,8 @@ session's `COPILOT_AGENT_SESSION_ID` — the runtime exposes no separate child
 marker to the shell — so a Goal mutation from a worker would silently hijack the
 root orchestrator's goal. The Stop hook stays correct regardless because it keys
 off the per-invocation stop payload identity, not the ambient shell environment.
+
+`/super-goal` may use this root Goal as its parent supervision record. It pauses
+the Goal whenever the parent is waiting for a child notification, then resumes
+only to inspect, steer, or independently verify. Its delegated child remains
+subject to the same absolute prohibition on Goal mutation.

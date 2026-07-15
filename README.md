@@ -1,7 +1,7 @@
 # Costas Agent Plugin
 
-An Open Plugin bundle for bounded agent workflows, persistent goals, migration
-and review loops, and gated repository maintenance.
+An Open Plugin bundle for supervised and persistent goals, bounded agent
+workflows, migration and review loops, and gated repository maintenance.
 
 ## Install
 
@@ -33,8 +33,8 @@ copilot plugin install costas-agent-plugin@costas-agent-tools
 ```
 
 The package uses the Open Plugins `.plugin/plugin.json` layout. It contributes
-25 skills, one `agentStop` hook, shared agent rules, and the Ultracode
-extension.
+26 skills, one `agentStop` hook, shared agent rules, the Ultracode extension,
+and the optional Super Goal progress canvas.
 
 ## Start here
 
@@ -55,6 +55,29 @@ practices, and troubleshoot prerequisites:
 /costas-agent-guide best-practices
 /costas-agent-guide troubleshoot "Ultracode child startup failed"
 ```
+
+## Super Goal
+
+`/super-goal` gives one objective to one child session while the current
+human-facing session remains the supervisor:
+
+```text
+/super-goal "Finish the authentication migration and prove every acceptance criterion"
+/super-goal status
+/super-goal steer "Keep the public API unchanged and add a regression test"
+```
+
+The parent derives 3–8 falsifiable criteria, delegates once, waits for child
+notifications without polling, steers bounded gaps, and independently verifies
+the final result. An optional `super-goal-progress` canvas renders the
+parent-to-child handoff, criterion-derived progress, steering state, and
+evidence history in the app side panel. Hosts without canvas support receive the
+same facts as text; the canvas never owns completion.
+
+Canvas state is session-scoped under the plugin's data directory rather than the
+repository/worktree, so the execution child cannot alter the dashboard through
+ordinary workspace writes. The parent Goal mirrors the current acceptance
+ledger for compaction recovery and canvas-less hosts.
 
 ## Repository maintenance
 
@@ -202,11 +225,18 @@ node --test tests/test_ultracode_runtime.mjs
 node --test tests/test_ultracode_worker.mjs
 ```
 
+Release candidates use the staged-tree barrier so untracked experiments cannot
+enter the install smoke or test inventory:
+
+```bash
+VALIDATE_STAGED_RELEASE=1 REQUIRE_INSTALL_SMOKE=1 python3 tests/validate.py
+```
+
 The validator checks manifests/frontmatter/references, verifies vendored
-third-party files against pinned upstream sha256 digests, validates all 25
+third-party files against pinned upstream sha256 digests, validates all 26
 skills and the maintenance harness resources, syntax-checks Python and
-JavaScript, runs Goal and Ultracode regressions, and verifies the credential,
-runtime-launch, and delegation policies. When `copilot` is on
+JavaScript, runs Goal, Super Goal canvas, and Ultracode regressions, and verifies
+the credential, runtime-launch, and delegation policies. When `copilot` is on
 `PATH`, `COPILOT_CLI_PATH` is set, or the local runtime checkout is available,
 it also performs a marketplace registration and installation under a temporary
 isolated `COPILOT_HOME`. Validation never modifies personal installed plugins or
@@ -223,7 +253,7 @@ license is Apache-2.0. See [NOTICE](NOTICE) for the full attribution.
 | Learn | NousResearch/hermes-agent concepts | MIT | Adapted |
 | Creative Ideation | NousResearch/hermes-agent | MIT | Vendored unchanged (byte-for-byte) |
 | Frontend Design | anthropics/skills | Apache-2.0 | Vendored unchanged (byte-for-byte) |
-| Costas Agent Guide, Workflow, Ultracode, Adversarial Loop, Mechanical Migration, Failure Work Queue, Semantic Port Audit, Loop Design, Repository Maintenance harness and commands | Local original work | Apache-2.0 | Original / Copilot-adapted |
+| Costas Agent Guide, Goal/Super Goal, Workflow, Ultracode, Adversarial Loop, Mechanical Migration, Failure Work Queue, Semantic Port Audit, Loop Design, Repository Maintenance harness and commands | Local original work | Apache-2.0 | Original / Copilot-adapted |
 
 Vendored files (`skills/creative-ideation/`, `skills/frontend-design/`) are
 reproduced exactly from upstream; their sha256 digests are pinned in

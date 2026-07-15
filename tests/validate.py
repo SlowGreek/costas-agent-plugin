@@ -14,7 +14,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_NAME = "costas-agent-plugin"
-PLUGIN_VERSION = "1.1.0"
+PLUGIN_VERSION = "1.2.0"
 MARKETPLACE_NAME = "costas-agent-tools"
 REPOSITORY_URL = "https://github.com/SlowGreek/costas-agent-plugin"
 EXPECTED_SKILLS = {
@@ -41,6 +41,7 @@ EXPECTED_SKILLS = {
     "repo-self-improve",
     "repo-triage",
     "semantic-port-audit",
+    "super-goal",
     "ultracode",
     "workflow",
 }
@@ -82,6 +83,14 @@ MAINTENANCE_RESOURCES = {
     "runtime/maintenance_lock.py",
     "runtime/repo_identity.py",
 }
+SUPER_GOAL_RESOURCES = {
+    "extensions/super-goal-progress/extension.mjs",
+    "extensions/super-goal-progress/renderer.mjs",
+    "extensions/super-goal-progress/state.mjs",
+    "skills/super-goal/SKILL.md",
+    "tests/test_super_goal_canvas.mjs",
+    "tests/test_super_goal_extension_boot.mjs",
+}
 
 
 def require(condition: bool, message: str) -> None:
@@ -101,6 +110,56 @@ def run(
         env.pop(name, None)
     completed = subprocess.run(command, cwd=ROOT, env=env, text=True, check=False)
     require(completed.returncode == 0, f"command failed ({completed.returncode}): {' '.join(command)}")
+
+
+def rerun_from_staged_release_tree() -> int | None:
+    """Run the authoritative release barrier against the Git index, not the dirty worktree."""
+    if os.environ.get("VALIDATE_STAGED_RELEASE") != "1" or os.environ.get("VALIDATING_MATERIALIZED") == "1":
+        return None
+    discovered = subprocess.run(
+        ["git", "-C", str(ROOT), "rev-parse", "--show-toplevel"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    require(discovered.returncode == 0, "VALIDATE_STAGED_RELEASE requires a Git worktree")
+    git_root = Path(discovered.stdout.strip()).resolve()
+    plugin_relative = ROOT.resolve().relative_to(git_root)
+    pathspec = "." if plugin_relative == Path(".") else plugin_relative.as_posix()
+    listed = subprocess.run(
+        ["git", "-C", str(git_root), "ls-files", "-z", "--cached", "--", pathspec],
+        capture_output=True,
+        check=False,
+    )
+    require(listed.returncode == 0 and listed.stdout, "staged plugin inventory is empty")
+
+    with tempfile.TemporaryDirectory(prefix="costas-agent-plugin-release-tree-") as directory:
+        prefix = f"{Path(directory).resolve()}{os.sep}"
+        materialized = subprocess.run(
+            ["git", "-C", str(git_root), "checkout-index", "-z", "--stdin", f"--prefix={prefix}"],
+            input=listed.stdout,
+            capture_output=True,
+            check=False,
+        )
+        require(
+            materialized.returncode == 0,
+            f"could not materialize staged release tree: {materialized.stderr.decode(errors='replace')}",
+        )
+        release_root = Path(directory) / plugin_relative
+        release_validator = release_root / "tests/validate.py"
+        require(release_validator.is_file(), "staged release tree is missing tests/validate.py")
+        env = {
+            **os.environ,
+            "VALIDATING_MATERIALIZED": "1",
+            "PYTHONDONTWRITEBYTECODE": "1",
+        }
+        completed = subprocess.run(
+            [sys.executable, "-B", str(release_validator)],
+            cwd=release_root,
+            env=env,
+            check=False,
+        )
+        return completed.returncode
 
 
 def load_json(relative: str) -> object:
@@ -168,6 +227,7 @@ def validate_manifest() -> None:
         "post-install messages must match",
     )
     require("/costas-agent-guide overview" in manifest.get("postInstallMessage", ""), "onboarding message missing")
+    require("/super-goal" in manifest.get("postInstallMessage", ""), "Super Goal onboarding message missing")
     require("/maintain-repo" in manifest.get("postInstallMessage", ""), "maintenance onboarding message missing")
     for path in ("skills", "extensions", "rules", "hooks/hooks.json", "LICENSE", "NOTICE", "README.md"):
         require((ROOT / path).exists(), f"manifest/package path is missing: {path}")
@@ -247,6 +307,167 @@ def validate_guide() -> None:
         "verify `git` is on `PATH`" in normalized,
         "guide troubleshooting must check git for repository maintenance",
     )
+
+
+def validate_super_goal() -> None:
+    for relative in SUPER_GOAL_RESOURCES:
+        require((ROOT / relative).is_file(), f"Super Goal resource missing: {relative}")
+
+    skill = (ROOT / "skills/super-goal/SKILL.md").read_text(encoding="utf-8")
+    metadata = parse_frontmatter(ROOT / "skills/super-goal/SKILL.md")
+    require(metadata.get("user-invocable") == "true", "/super-goal must be user-invocable")
+    normalized = re.sub(r"\s+", " ", skill)
+    normalized_lower = normalized.lower()
+    for required in (
+        "3–8 falsifiable criteria",
+        "exactly one child substrate",
+        "create_session",
+        'notify_on_idle: "always"',
+        "coordinate_with_creator: true",
+        "background `task` agent",
+        "read_agent",
+        "write_agent",
+        "independently inspect",
+        "at most one concrete steering message per round",
+        "at most one replacement child",
+        "progress is exactly",
+        "canvas support is absent",
+        "durable supervision ledger",
+        "goalctl.py edit",
+        "binary diff",
+        "replacementReason",
+        "objective and criterion ids/labels are immutable",
+    ):
+        require(required.lower() in normalized_lower, f"/super-goal is missing contract text: {required}")
+    require(
+        "Do not invoke `/goal`, `/super-goal`" in skill
+        and "`goalctl.py`, `create_session`, `task`" in skill,
+        "the delegated child must be forbidden from Goal mutation and nested delegation",
+    )
+    require(
+        "Never poll a running child" in skill
+        and "Pause the root Goal at every wait boundary" in skill
+        and "The child notification wakes the conversation" in skill,
+        "Super Goal must sleep on notifications rather than busy-poll under an active Goal",
+    )
+    require(
+        "A child saying “done” is a trigger for verification, not acceptance" in skill,
+        "child self-report must not satisfy parent acceptance",
+    )
+    require(
+        "Leave `base_branch` unset" in skill,
+        "Super Goal must not accidentally stack child work on the current feature branch",
+    )
+
+    extension = (ROOT / "extensions/super-goal-progress/extension.mjs").read_text(encoding="utf-8")
+    state = (ROOT / "extensions/super-goal-progress/state.mjs").read_text(encoding="utf-8")
+    renderer = (ROOT / "extensions/super-goal-progress/renderer.mjs").read_text(encoding="utf-8")
+    require('id: "super-goal-progress"' in extension, "Super Goal canvas id mismatch")
+    require('server.listen(0, "127.0.0.1"' in extension, "Super Goal canvas must bind loopback only")
+    require(
+        'pathname === "/state.json"' in extension
+        and 'pathname === "/events"' in extension
+        and 'req.method !== "GET"' in extension,
+        "Super Goal canvas HTTP surface must remain read-only and route-limited",
+    )
+    require(
+        'typeof extensionSdk.createCanvas === "function"' in extension
+        and "session = await joinSession({})" in extension,
+        "older hosts must degrade without failing the extension process",
+    )
+    require(
+        "use the complete action" in state
+        and "criterion.status === \"passed\"" in state
+        and "missing evidence" in state,
+        "state reducers must prevent progress/completion without criterion evidence",
+    )
+    require(
+        "expectedRevision is required for every state mutation" in state
+        and 'required: ["expectedRevision"]' in extension,
+        "all Super Goal mutations must use compare-and-swap revisions",
+    )
+    require(
+        "childAttempts" in state
+        and "replacementsUsed" in state
+        and "MAX_REPLACEMENTS = 1" in state
+        and "handoffEvidence" in state,
+        "Super Goal must durably enforce the one-replacement handoff contract",
+    )
+    require(
+        'state.status === "completed" || state.status === "stopped"' in state,
+        "completed and stopped Super Goals must both be terminal",
+    )
+    require(
+        "const SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/" in state,
+        "fallback session ids must reject dot-segment traversal",
+    )
+    require(
+        'path.resolve(pluginDataPath, "super-goal", sessionId)' in state
+        and "resolvePluginDataDir" in extension
+        and "pluginDataPath: PLUGIN_DATA_ROOT" in extension
+        and "Never key durable data by instanceId" in state
+        and "writeStateFileAtomic" in state
+        and "withGoalLock" in state,
+        "Super Goal state persistence or serialization contract is missing",
+    )
+    require(
+        "serializeStateForDisk" in state
+        and "Buffer.byteLength(serializeStateForDisk(state)" in state
+        and "fs.writeFile(staging, serializeStateForDisk(state)" in state,
+        "state-size validation and writes must use the exact same serialization",
+    )
+    require(
+        extension.count("readValidatedState(") >= 4
+        and "validateStoredState(state, goalId)" in extension
+        and '"state_corrupt"' in extension,
+        "HTTP, SSE, and action reads must reject corrupt durable state",
+    )
+    require(
+        "assertStateDirectory(trustedRoot" in state
+        and "path contains a symlink or non-directory ancestor" in state
+        and "resolves outside its trusted session root" in state,
+        "state persistence must reject symlinked descendants of the trusted session root",
+    )
+    require(
+        "the trusted Super Goal session root must not be a symlink" in state
+        and "the Super Goal state file disappeared during a read" in state,
+        "trusted-root symlinks and observed-file disappearance must fail as corruption",
+    )
+    require(
+        'assertStoredKeys(state.progress, new Set(["passedCount", "totalCount", "percent"])' in state,
+        "stored progress must reject unknown fields",
+    )
+    require(
+        'kind === "steer"' in state
+        and "the Super Goal steering-round budget is exhausted" in state
+        and "round is server-managed" in state,
+        "steering events must consume a monotonic server-managed round budget",
+    )
+    require(
+        "evidenceAudits" in state and "Criterion ${criterion.id} evidence updated" in state,
+        "criterion evidence changes must remain in event history",
+    )
+    require(
+        'mkdirError.code !== "EEXIST"' in state,
+        "concurrent first-goal directory creation must tolerate a benign EEXIST race",
+    )
+    require(
+        "entry.ready" in extension
+        and "instanceServers.set(instanceId, entry)" in extension
+        and "await existing.ready" in extension,
+        "concurrent opens of one canvas instance must share one server-start promise",
+    )
+    require(
+        "--background-color-default" in renderer
+        and "--text-color-default" in renderer
+        and "--font-sans" in renderer,
+        "Super Goal renderer must consume documented canvas theme tokens",
+    )
+    require(
+        "textContent" in renderer and re.search(r"\.innerHTML\s*=", renderer) is None,
+        "renderer must not inject goal text as HTML",
+    )
+    require("prefers-reduced-motion" in renderer, "renderer must honor reduced-motion preferences")
 
 
 def validate_maintenance() -> None:
@@ -1422,8 +1643,12 @@ def validate_install_smoke(runtime: Path | None) -> None:
             "hooks/hooks.json",
             "rules/agentic-engineering.md",
             "extensions/ultracode/extension.mjs",
+            "extensions/super-goal-progress/extension.mjs",
+            "extensions/super-goal-progress/renderer.mjs",
+            "extensions/super-goal-progress/state.mjs",
             "skills/costas-agent-guide/SKILL.md",
             "skills/maintain-repo/SKILL.md",
+            "skills/super-goal/SKILL.md",
             "runtime/goalctl.py",
             "runtime/goal_continue.py",
         ):
@@ -1431,6 +1656,17 @@ def validate_install_smoke(runtime: Path | None) -> None:
         for relative in MAINTENANCE_RESOURCES:
             installed_resource = installed / "skills/repo-maintenance" / relative
             require(installed_resource.is_file(), f"installed maintenance resource is missing {relative}")
+        if runtime and (runtime / "dist-cli/index.js").is_file():
+            run(
+                ["node", "--test", "tests/test_super_goal_extension_boot.mjs"],
+                extra_env={
+                    "COPILOT_HOME": home,
+                    "COPILOT_PLUGIN_ROOT": str(installed),
+                    "COPILOT_SDK_PATH": str(runtime / "dist-cli/copilot-sdk"),
+                    "COPILOT_CLI_DIST_DIR": str(runtime / "dist-cli"),
+                },
+                remove_env=("GITHUB_TOKEN", "COPILOT_GITHUB_TOKEN", "GH_TOKEN"),
+            )
 
     print(f"install smoke: {PLUGIN_NAME}@{MARKETPLACE_NAME}")
 
@@ -1441,6 +1677,7 @@ def main() -> int:
     validate_loop_design_policy()
     validate_guide()
     validate_readme()
+    validate_super_goal()
     validate_maintenance()
     validate_vendored()
     validate_markdown_links()
@@ -1454,6 +1691,7 @@ def main() -> int:
     run(["node", "--test", "tests/test_ultracode_runtime.mjs"])
     run(["node", "--test", "tests/test_ultracode_extension_boot.mjs"])
     run(["node", "--test", "tests/test_ultracode_worker.mjs"])
+    run(["node", "--test", "tests/test_super_goal_canvas.mjs"])
     if runtime and (runtime / "dist-cli/index.js").is_file():
         run(
             ["node", "--test", "tests/test_sdk_startup.mjs"],
@@ -1465,10 +1703,11 @@ def main() -> int:
         )
     print(
         f"validated: install, manifest, {len(EXPECTED_SKILLS)} skills, "
-        "maintenance harness, onboarding guide, Loop Design, hooks, Goal, Ultracode"
+        "maintenance harness, onboarding guide, Loop Design, hooks, Goal, Super Goal, Ultracode"
     )
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    staged_result = rerun_from_staged_release_tree()
+    raise SystemExit(main() if staged_result is None else staged_result)
