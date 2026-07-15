@@ -28,7 +28,10 @@ guide itself has no external dependencies.
 - Ultracode child agents require `GH_TOKEN` in the Copilot CLI environment or a
   working `gh auth login`. `GITHUB_TOKEN` and `COPILOT_GITHUB_TOKEN` do not
   reach the extension process.
-- `git` is required only when an Ultracode agent requests a worktree.
+- `git` is required for repository maintenance and for Ultracode worktree agents.
+- Repository maintenance requires issue, PR, review-thread, and CI access for
+  the repository host. Persistent standing mode additionally requires
+  `save_workflow`, `run_workflow`, and `list_workflows`.
 
 ## Procedure
 
@@ -46,9 +49,13 @@ guide itself has no external dependencies.
    - **Shared rules** apply evidence, isolation, bounded-work, and completion
      standards while the plugin is enabled.
    - The **Goal hook** checks persistent Goal state when a session attempts to
-     stop and requests another turn while work and budget remain.
+     stop and requests another turn while work and budget remain. State is
+     isolated by Copilot session and working directory.
    - The **Ultracode extension** exposes tools for starting and managing bounded
      JavaScript workflows made of isolated Copilot child sessions.
+   - The **repository-maintenance harness** uses a generated codebase adapter,
+     one durable backlog, verifier-gated draft PRs, and optional persisted
+     workflows. Its standalone loop skills also work on demand.
    - Goal and Ultracode runtime state use Copilot plugin-data storage. Workflow
      source files may live in a repository or user workflow directory.
 4. Use this capability map:
@@ -56,6 +63,18 @@ guide itself has no external dependencies.
    | Need | Primary capability | Result |
    | --- | --- | --- |
    | Discover repeated work worth automating | `/loop-design` | Ranked automation candidates from a repo, scoped chats, or both |
+   | Onboard and arm complete repository maintenance | `/maintain-repo` (alias of `/repo-maintenance`) | Codebase adapter, durable backlog, gated maintenance loops, and arming proof |
+   | Learn one repository before maintenance | `/repo-learn` | Proven `<repo>-codebase` adapter with an exact red-to-green test recipe |
+   | Classify a maintenance backlog | `/repo-triage` | Evidence-backed dispositions and handoffs |
+   | Turn verified items into draft PRs | `/repo-implement` | Authorized submitted drafts or drainable prepared handoffs after every gate |
+   | Steward open maintenance PRs | `/repo-pr-maintenance` | Current review replies, target freshness, and gate reconciliation |
+   | Discover reproducible code defects | `/repo-auto-review` | Deduplicated submitted-or-prepared tracker items without speculative fixes |
+   | Learn and apply team review taste | `/custom-pr-review` | Advisory review profile and findings |
+   | Audit dependency risk | `/repo-dep-sweep` | Reachability-checked, submitted-or-prepared dependency items |
+   | Detect flaky CI signal | `/repo-ci-health` | Submitted-or-prepared de-flake WIs and quarantine drafts |
+   | Verify fixes after merge | `/repo-post-merge` | Repro results plus submitted-or-prepared regression/revert artifacts |
+   | Summarize maintenance evidence | `/repo-report` | Durable digest of outcomes, friction, and decisions |
+   | Improve maintenance safeguards | `/repo-self-improve` | Submitted-or-prepared WI/draft pairs without weakening gates |
    | Continue a long objective across turns | `/goal` | Persistent objective, budget, pause/resume, and completion proof |
    | Run a bounded background agent workflow | `/ultracode` | Persisted multi-agent run with status, cancellation, and resume |
    | Design an adaptive multi-agent approach | `/workflow` | Fan-out, pipeline, adversarial, or repair workflow |
@@ -84,6 +103,9 @@ guide itself has no external dependencies.
 
    ```text
    /loop-design both "recurring CI repair work"
+   /repo-learn
+   /maintain-repo
+   /repo-ci-health
    /goal "Complete the API migration and prove parity" --budget 30
    /workflow "Plan the migration across independent ownership shards"
    /ultracode "Audit every service contract and synthesize the findings"
@@ -106,6 +128,8 @@ guide itself has no external dependencies.
    7. Treat repeated worker failures as workflow defects, not extra retries.
    8. Stop only on verified completion, an explicit bound, or a genuine external
       blocker.
+   9. Prefer a standalone maintenance loop for one-off work; arm
+      `/maintain-repo` only when persisted recurring operation is intended.
 9. For `troubleshoot`:
    1. Confirm the plugin appears in `copilot plugin list` or `/plugin list`.
    2. After an install or update, start a new session or run `/clear` so skills
@@ -113,7 +137,10 @@ guide itself has no external dependencies.
    3. For Goal failures, check Python availability and plugin-data access.
    4. For Ultracode startup failures, check `GH_TOKEN` or `gh auth token`, then
       inspect the exact run error with `ultracode_status`.
-   5. Surface missing prerequisites or inaccessible state. Do not substitute a
+   5. For repository maintenance, verify `git` is on `PATH`, `/repo-learn`
+      completed, the host integration can reach issues/PRs/CI, and
+      `list_workflows` exists before claiming standing mode is armed.
+   6. Surface missing prerequisites or inaccessible state. Do not substitute a
       success-shaped fallback.
 
 ## Quick Reference
@@ -123,6 +150,19 @@ guide itself has no external dependencies.
 - `/costas-agent-guide examples "<task>"`
 - `/costas-agent-guide best-practices`
 - `/costas-agent-guide troubleshoot "<symptom>"`
+- `/maintain-repo [repository or authority mode]`
+- `/repo-maintenance [repository or authority mode]`
+- `/repo-learn`
+- `/repo-triage`
+- `/repo-implement`
+- `/repo-pr-maintenance`
+- `/repo-auto-review`
+- `/custom-pr-review`
+- `/repo-dep-sweep`
+- `/repo-ci-health`
+- `/repo-post-merge`
+- `/repo-report`
+- `/repo-self-improve`
 - `/loop-design [repo|chats|both] [area or objective]`
 - `/goal <objective|status|pause|resume|clear> [--budget N]`
 - `/ultracode <task to orchestrate>`
@@ -143,6 +183,12 @@ guide itself has no external dependencies.
 - A Goal budget ending is not evidence that the objective is complete.
 - Loop Design never silently broadens from repository evidence into unrelated
   chat history.
+- Repository maintenance is not armed merely because one loop ran. Every
+  supported workflow must be enabled and at least one must be proof-fired.
+- Only one maintenance orchestrator may own a repository at a time. Never bypass
+  the bundled execution lease to force overlapping Goal or backlog updates.
+- Maintenance commands prepare gated draft changes and respect configured
+  authority; they never silently merge or push to protected branches.
 - Ultracode is read-only by default. Workspace agents need explicit permission
   and non-overlapping ownership or separate worktrees.
 - Ultracode children cannot recursively launch task, search-subagent, plugin, or

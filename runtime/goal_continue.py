@@ -51,11 +51,34 @@ def parse_payload() -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def hook_session_id(payload: dict[str, Any]) -> str | None:
+    value = payload.get("sessionId")
+    if not isinstance(value, str):
+        return None
+    return value.strip() or None
+
+
+def hook_cwd(payload: dict[str, Any]) -> str | None:
+    value = payload.get("cwd")
+    if not isinstance(value, str):
+        return None
+    return value.strip() or None
+
+
 def main() -> None:
     try:
         payload = parse_payload()
-        cwd = payload.get("cwd") or os.getcwd()
-        state = goalctl.load(cwd)
+        session_id = hook_session_id(payload)
+        if session_id is None:
+            return
+        cwd = hook_cwd(payload)
+        if cwd is None:
+            return
+        # The hook's session id comes from the stop payload, not a verified root
+        # claim, so it must never trigger the v1.0 legacy-state migration (that
+        # would let a child's stop event single-winner-steal a goal that isn't
+        # provably its own). Read this session's own scoped slot only.
+        state = goalctl.load_without_legacy_claim(cwd, session_id)
         if not isinstance(state, dict) or state.get("status") != "active":
             return
         objective = str(state.get("objective") or "").strip()
@@ -67,11 +90,11 @@ def main() -> None:
         cap = max(1, min(budget, goalctl.HARD_CAP))
         if used >= cap:
             state["status"] = "budget_limited"
-            goalctl.save(state, cwd)
+            goalctl.save(state, cwd, session_id)
             block(budget_reason(objective, used))
             return
         state["continuations"] = used + 1
-        goalctl.save(state, cwd)
+        goalctl.save(state, cwd, session_id)
         block(continuation_reason(objective, used + 1, cap))
     except Exception:
         # No output means allow stop. A hook failure must never trap a session.

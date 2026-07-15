@@ -1,7 +1,7 @@
 # Costas Agent Plugin
 
 An Open Plugin bundle for bounded agent workflows, persistent goals, migration
-and review loops, and repository automation design.
+and review loops, and gated repository maintenance.
 
 ## Install
 
@@ -33,7 +33,7 @@ copilot plugin install costas-agent-plugin@costas-agent-tools
 ```
 
 The package uses the Open Plugins `.plugin/plugin.json` layout. It contributes
-12 skills, one `agentStop` hook, shared agent rules, and the Ultracode
+25 skills, one `agentStop` hook, shared agent rules, and the Ultracode
 extension.
 
 ## Start here
@@ -55,6 +55,35 @@ practices, and troubleshoot prerequisites:
 /costas-agent-guide best-practices
 /costas-agent-guide troubleshoot "Ultracode child startup failed"
 ```
+
+## Repository maintenance
+
+`/maintain-repo` is the user-facing alias for `/repo-maintenance`. The conductor
+onboards the current repository, establishes gated maintenance state, and can
+arm persistent loops when workflow scheduling is available. Eleven standalone
+skills expose each phase independently:
+
+```text
+/repo-learn
+/repo-triage
+/repo-implement
+/repo-pr-maintenance
+/repo-auto-review
+/custom-pr-review
+/repo-dep-sweep
+/repo-ci-health
+/repo-post-merge
+/repo-report
+/repo-self-improve
+```
+
+Run `/repo-learn` first to create a repository-specific codebase skill and prove
+its test recipe. Use a standalone loop for one-off work; use `/maintain-repo`
+only when you want the complete system. Persistent standing mode requires
+`save_workflow`, `run_workflow`, and `list_workflows`; without them the loops
+remain available on demand and the conductor reports that the system is not
+armed. A bundled cross-process lease serializes per-repository Goal and backlog
+updates when scheduled loops overlap.
 
 ## Loop Design sources
 
@@ -78,9 +107,16 @@ limitation instead of silently treating repository evidence as chat recurrence.
 
 - GitHub Copilot CLI with Open Plugins and extension support. This package is
   validated against CLI `1.0.69-2` and bundled `@github/copilot-sdk` `1.0.3`.
-- Python 3 for Goal state and continuation hooks (`python3` on macOS/Linux,
-  `python` in the bundled PowerShell hook).
-- `git` only when an Ultracode call requests `worktree: true`.
+- Python 3 for Goal state, continuation hooks, and the repository-maintenance
+  execution lease (`python3` on macOS/Linux, `python` in the bundled
+  PowerShell hook).
+- `git` on `PATH` for repository maintenance: `runtime/repo_identity.py` shells
+  out to it to resolve repository identity, and every maintenance loop fetches,
+  diffs, branches, and pushes with it directly. Ultracode additionally needs
+  `git` whenever a call requests `worktree: true`.
+- Repository maintenance requires issue, PR, review-thread, and CI access for
+  the repository host. Persistent standing mode also requires the Copilot
+  workflow scheduling tools.
 - Ultracode child agents need one authentication route that is actually visible
   to an extension:
   - set `GH_TOKEN` before launching Copilot CLI, or
@@ -150,11 +186,11 @@ and reported; Ultracode never resets or removes them automatically.
 
 ## Goal hook
 
-`/goal` stores state in `${COPILOT_PLUGIN_DATA}/goals`. The `agentStop` hook is
-fail-open: malformed input, unreadable state, or write failure permits the
-session to stop. It forces at most 30 continuation turns by default, never more
-than 100, then permits one wrap-up turn. Only a three-turn identical blocker
-audit may mark a goal blocked.
+`/goal` stores session-and-working-directory-scoped state in
+`${COPILOT_PLUGIN_DATA}/goals`. The `agentStop` hook is fail-open: malformed
+input, unreadable state, or write failure permits the session to stop. It forces
+at most 30 continuation turns by default, never more than 100, then permits one
+wrap-up turn. Only a three-turn identical blocker audit may mark a goal blocked.
 
 ## Validation
 
@@ -167,9 +203,10 @@ node --test tests/test_ultracode_worker.mjs
 ```
 
 The validator checks manifests/frontmatter/references, verifies vendored
-third-party files against pinned upstream sha256 digests, syntax-checks Python
-and JavaScript, runs Goal and Ultracode regressions, and verifies the
-credential, runtime-launch, and delegation policies. When `copilot` is on
+third-party files against pinned upstream sha256 digests, validates all 25
+skills and the maintenance harness resources, syntax-checks Python and
+JavaScript, runs Goal and Ultracode regressions, and verifies the credential,
+runtime-launch, and delegation policies. When `copilot` is on
 `PATH`, `COPILOT_CLI_PATH` is set, or the local runtime checkout is available,
 it also performs a marketplace registration and installation under a temporary
 isolated `COPILOT_HOME`. Validation never modifies personal installed plugins or
@@ -186,7 +223,7 @@ license is Apache-2.0. See [NOTICE](NOTICE) for the full attribution.
 | Learn | NousResearch/hermes-agent concepts | MIT | Adapted |
 | Creative Ideation | NousResearch/hermes-agent | MIT | Vendored unchanged (byte-for-byte) |
 | Frontend Design | anthropics/skills | Apache-2.0 | Vendored unchanged (byte-for-byte) |
-| Costas Agent Guide, Workflow, Ultracode, Adversarial Loop, Mechanical Migration, Failure Work Queue, Semantic Port Audit, Loop Design | Local original work | Apache-2.0 | Original |
+| Costas Agent Guide, Workflow, Ultracode, Adversarial Loop, Mechanical Migration, Failure Work Queue, Semantic Port Audit, Loop Design, Repository Maintenance harness and commands | Local original work | Apache-2.0 | Original / Copilot-adapted |
 
 Vendored files (`skills/creative-ideation/`, `skills/frontend-design/`) are
 reproduced exactly from upstream; their sha256 digests are pinned in

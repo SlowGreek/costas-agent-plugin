@@ -19,6 +19,9 @@ This product includes:
 - Local Workflow, Ultracode, Adversarial Loop, Mechanical Migration,
   Failure Work Queue, Semantic Port Audit, Loop Design, runtime integration,
   and tests, licensed under Apache License 2.0.
+- Repository Maintenance conductor, compatibility alias, shared harness, and
+  supporting repo maintenance skills, adapted from local original work for
+  Copilot CLI and licensed under Apache License 2.0.
 
 Upstream license texts are retained in licenses/ (MIT.txt names the Creative
 Ideation copyright holder; Apache-2.0.txt references the full text in LICENSE)

@@ -1,7 +1,7 @@
 {
   "name": "costas-agent-plugin",
-  "version": "1.0.0",
-  "description": "Portable agentic engineering skills, Goal continuation, and bounded Ultracode workflows.",
+  "version": "1.1.0",
+  "description": "Portable agentic engineering skills, gated repository maintenance, Goal continuation, and bounded Ultracode workflows.",
   "author": {
     "name": "Costas Panay",
     "url": "https://github.com/SlowGreek"
@@ -12,6 +12,7 @@
   "keywords": [
     "agentic-engineering",
     "multi-agent",
+    "repository-maintenance",
     "workflows",
     "copilot"
   ],
@@ -35,5 +36,5 @@
     "exclusive": true
   },
   "hooks": "./hooks/hooks.json",
-  "postInstallMessage": "Run /costas-agent-guide overview to learn what was installed, choose the right capability, and see best practices. Ultracode child agents require GH_TOKEN or a working `gh auth login`."
+  "postInstallMessage": "Run /costas-agent-guide overview to learn what was installed and choose the right capability. Use /maintain-repo to onboard and arm gated repository maintenance. Ultracode child agents require GH_TOKEN or a working `gh auth login`."
 }
