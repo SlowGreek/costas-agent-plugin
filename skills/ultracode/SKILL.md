@@ -1,6 +1,6 @@
 ---
 name: ultracode
-description: Generate and run background JavaScript workflows that coordinate isolated Copilot agents with bounded concurrency and persisted results.
+description: Use when a large task benefits from a dynamic JavaScript workflow that can fan out isolated Copilot sub-agents, coordinate bounded parallel or adversarial work, and persist synthesized results.
 user-invocable: true
 argument-hint: <task to orchestrate>
 ---

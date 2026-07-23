@@ -19,6 +19,14 @@ class _HermesContext:
 
 
 class HermesPluginCompatibilityTests(unittest.TestCase):
+    def test_ultracode_is_model_invocable_for_dynamic_agent_workflows(self) -> None:
+        content = (ROOT / "skills" / "ultracode" / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = content.split("---", 2)[1]
+
+        self.assertNotIn("disable-model-invocation", frontmatter)
+        self.assertIn("dynamic", frontmatter.lower())
+        self.assertIn("fan out", frontmatter.lower())
+
     def test_manifest_and_entrypoint_register_every_skill(self) -> None:
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
         self.assertIn("name: costas-agent-plugin", manifest)
