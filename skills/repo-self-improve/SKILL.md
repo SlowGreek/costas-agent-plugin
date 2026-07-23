@@ -3,6 +3,7 @@ name: repo-self-improve
 description: Turn repeated learnings into submitted or prepared self-improve WIs and gated artifact drafts.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-self-improve — self-improvement loop

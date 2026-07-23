@@ -2,6 +2,7 @@
 name: workflow
 description: Plan and run a dynamic multi-agent workflow for large, parallel, or adversarial tasks.
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # Workflow

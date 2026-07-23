@@ -3,6 +3,7 @@ name: repo-implement
 description: Turn verified items into submitted or prepared gated draft PRs with reproduction, regression, review, and fidelity checks.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-implement — gated implement loop

@@ -3,6 +3,7 @@ name: repo-report
 description: Write a maintenance digest covering backlog dispositions, PR progress, gate catches, friction, and human decisions.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-report — report cadence

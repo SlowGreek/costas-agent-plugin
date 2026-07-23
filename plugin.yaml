@@ -1,0 +1,5 @@
+name: costas-agent-plugin
+version: "1.2.0"
+description: "Portable agentic engineering skills, supervised goals, gated repository maintenance, and bounded multi-agent workflows for Hermes Agent and GitHub Copilot CLI."
+author: "Costas Panay"
+kind: standalone

@@ -3,6 +3,7 @@ name: repo-post-merge
 description: Re-run landed fixes, then submit authorized or prepare regression WIs and optional revert drafts.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-post-merge — post-merge regression sentinel

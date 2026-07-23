@@ -3,6 +3,7 @@ name: repo-auto-review
 description: Sweep read-only for reproducible bugs, then submit tracker items with persisted authority or prepare them without fixing code.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-auto-review — bug-sweeper loop

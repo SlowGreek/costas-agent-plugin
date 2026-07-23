@@ -3,6 +3,7 @@ name: custom-pr-review
 description: Learn a team's demonstrated PR review standards from merged history and apply them as advisory findings.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /custom-pr-review — learned team-style reviewer

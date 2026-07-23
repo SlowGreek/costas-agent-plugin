@@ -3,6 +3,7 @@ name: repo-ci-health
 description: Detect same-commit flaky tests, then submit authorized or prepare de-flake WIs and gated quarantine drafts.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-ci-health — CI / flaky-test health loop

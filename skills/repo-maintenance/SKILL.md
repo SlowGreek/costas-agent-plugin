@@ -3,6 +3,7 @@ name: repo-maintenance
 description: Onboard a repository and arm a gated maintenance system that submits authorized artifacts or prepares drainable handoffs.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 argument-hint: "[repository or authority mode]"
 ---
 

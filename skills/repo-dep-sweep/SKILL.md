@@ -3,6 +3,7 @@ name: repo-dep-sweep
 description: Audit dependency risk, then submit deduplicated tracker items with persisted authority or prepare them without changing versions.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-dep-sweep — dependency / supply-chain sweeper

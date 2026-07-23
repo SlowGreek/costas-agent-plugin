@@ -2,6 +2,7 @@
 name: adversarial-loop
 description: Implement high-risk changes through separate implementer, bug-seeking reviewer, and fixer contexts.
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # Adversarial Implement–Review–Fix

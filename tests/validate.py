@@ -45,6 +45,16 @@ EXPECTED_SKILLS = {
     "ultracode",
     "workflow",
 }
+MODEL_INVOKABLE_SKILLS = {
+    "creative-ideation",
+    "frontend-design",
+    "goal",
+    "learn",
+    "loop-design",
+    "super-goal",
+    "ultracode",
+}
+BYTE_PINNED_VENDOR_SKILLS = {"creative-ideation", "frontend-design"}
 MAINTENANCE_SKILLS = {
     "custom-pr-review",
     "maintain-repo",
@@ -241,6 +251,26 @@ def validate_skills() -> None:
         name = metadata.get("name")
         require(name == path.parent.name, f"{path.relative_to(ROOT)} name must match its directory")
         require(bool(metadata.get("description")), f"{path.relative_to(ROOT)} needs a description")
+        if name in BYTE_PINNED_VENDOR_SKILLS:
+            require(
+                "user-invocable" not in metadata,
+                f"/{name} must keep its byte-pinned upstream frontmatter unchanged",
+            )
+        else:
+            require(
+                metadata.get("user-invocable") == "true",
+                f"/{name} must remain available for explicit user invocation",
+            )
+        if name in MODEL_INVOKABLE_SKILLS:
+            require(
+                "disable-model-invocation" not in metadata,
+                f"/{name} must remain available for automatic model invocation",
+            )
+        else:
+            require(
+                metadata.get("disable-model-invocation") == "true",
+                f"/{name} must not be invoked automatically by the model",
+            )
         names.add(name)
     require(len(files) == len(EXPECTED_SKILLS), "duplicate or extra skill entry point")
     require(names == EXPECTED_SKILLS, f"skill inventory mismatch: {sorted(names ^ EXPECTED_SKILLS)}")

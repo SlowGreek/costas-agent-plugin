@@ -2,6 +2,7 @@
 name: maintain-repo
 description: Run the complete gated repository-maintenance conductor, from onboarding through persisted standing loops.
 user-invocable: true
+disable-model-invocation: true
 argument-hint: "[repository or authority mode]"
 ---
 

@@ -3,6 +3,7 @@ name: repo-learn
 description: Onboard a repository into a reusable codebase skill and prove its test recipe before maintenance loops run.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-learn — onboard a repo

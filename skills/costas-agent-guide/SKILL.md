@@ -2,6 +2,7 @@
 name: costas-agent-guide
 description: Explain the installed Costas Agent Plugin, choose the right capability for a task, and teach its operating and safety practices.
 user-invocable: true
+disable-model-invocation: true
 argument-hint: "[overview|choose|examples|best-practices|troubleshoot] [task]"
 ---
 

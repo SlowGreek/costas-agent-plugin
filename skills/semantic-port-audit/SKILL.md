@@ -2,6 +2,7 @@
 name: semantic-port-audit
 description: Audit source-to-target ports for language semantic mismatches and produce focused regression tests.
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # Semantic Port Audit

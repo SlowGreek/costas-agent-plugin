@@ -2,6 +2,7 @@
 name: mechanical-migration
 description: Plan and execute behavior-preserving codebase migrations with pilots, sharded workflows, and parity gates.
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # Mechanical Migration

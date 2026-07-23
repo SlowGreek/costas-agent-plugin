@@ -3,6 +3,7 @@ name: repo-pr-maintenance
 description: Steward maintenance pull requests through reviewer responses, work-item fidelity, gate checks, and target-branch freshness.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-pr-maintenance — PR stewardship loop

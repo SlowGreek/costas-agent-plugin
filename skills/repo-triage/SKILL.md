@@ -3,6 +3,7 @@ name: repo-triage
 description: Classify every maintenance backlog item into a proven disposition with its required evidence.
 version: 1.0.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # /repo-triage — backlog triage loop

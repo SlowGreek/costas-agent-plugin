@@ -13,6 +13,26 @@ copilot plugin install costas-agent-plugin@costas-agent-tools
 copilot plugin list
 ```
 
+### Hermes Agent
+
+The same repository is also a native Hermes plugin. Install and enable it with:
+
+```bash
+hermes plugins install SlowGreek/costas-agent-plugin --enable
+```
+
+Hermes exposes the 26 skills through the plugin namespace, for example:
+
+```text
+/skill costas-agent-plugin:super-goal
+/skill costas-agent-plugin:repo-maintenance
+```
+
+The Hermes adapter uses a host-native Super Goal implementation built around
+`delegate_task`, `todo`, automatic completion delivery, and independent parent
+verification. Copilot continues to use the Open Plugin extension, canvas, and
+Goal runtime under `.plugin/`, `extensions/`, and `runtime/`.
+
 The same flow works with a private repository when every installer has read
 access and non-interactive Git credentials. For GitHub, run `gh auth login` and
 `gh auth setup-git` first. For another Git host, pass its clone URL to
@@ -35,6 +55,11 @@ copilot plugin install costas-agent-plugin@costas-agent-tools
 The package uses the Open Plugins `.plugin/plugin.json` layout. It contributes
 26 skills, one `agentStop` hook, shared agent rules, the Ultracode extension,
 and the optional Super Goal progress canvas.
+
+All bundled skills remain available through explicit slash-command invocation.
+`creative-ideation`, `frontend-design`, `goal`, `learn`, `loop-design`,
+`super-goal`, and `ultracode` may also be selected automatically by the model.
+Every other skill sets `disable-model-invocation: true` and is manual-only.
 
 ## Start here
 

@@ -2,6 +2,7 @@
 name: failure-work-queue
 description: Turn compiler, test, runtime, or CI failures into persistent grouped queues for bounded repair loops.
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # Failure Work Queue
