@@ -155,6 +155,20 @@ limitation instead of silently treating repository evidence as chat recurrence.
 
 - GitHub Copilot CLI with Open Plugins and extension support. This package is
   validated against CLI `1.0.69-2` and bundled `@github/copilot-sdk` `1.0.3`.
+- The CLI's `EXTENSIONS` feature flag must be on. It is off by default in
+  current builds, and when it is off the CLI never loads `extensions/` at all:
+  the `ultracode_*` tools are simply absent and the model reports that
+  `ultracode_start` does not exist. Enable it per invocation with:
+
+  ```sh
+  COPILOT_CLI_ENABLED_FEATURE_FLAGS=EXTENSIONS copilot
+  ```
+
+  Export that variable in your shell profile to make it permanent. Note that
+  the flag cannot be set from `~/.copilot/settings.json` or `config.json`;
+  only the environment variable is honored. To verify, run
+  `COPILOT_CLI_ENABLED_FEATURE_FLAGS=EXTENSIONS copilot -p "call ultracode_list"`
+  — it should return `[]` rather than a missing-tool message.
 - Python 3 for Goal state, continuation hooks, and the repository-maintenance
   execution lease (`python3` on macOS/Linux, `python` in the bundled
   PowerShell hook).
