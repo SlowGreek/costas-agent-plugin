@@ -29,7 +29,6 @@ const DEFAULT_TIMEOUT_MINUTES = 60;
 const HARD_TIMEOUT_MINUTES = 360;
 const DEFAULT_AGENT_TIMEOUT_MINUTES = 20;
 const MAX_RESULT_CHARS = 30_000;
-const KEEPALIVE_MS = 15_000;
 
 const runs = new Map();
 let sdkClientPromise;
@@ -671,14 +670,8 @@ restoreInterruptedRuns().catch(async (error) => {
     });
 });
 
-// Keep the extension process alive after tool registration. Without an active
-// handle Node drains the event loop and exits 0 within seconds, taking the
-// registered ultracode_* tools with it (host then reports "tool does not exist").
-const keepAlive = setInterval(() => {}, KEEPALIVE_MS);
-
 for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, async () => {
-        clearInterval(keepAlive);
         for (const run of runs.values()) {
             if (run.worker && !run.finished) await run.worker.terminate();
             await abortActiveSessions(run);
